@@ -4,6 +4,7 @@ using Microsoft.Graph;
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Text;
+using Util;
 
 namespace ConsoleApp3
 {
@@ -139,8 +140,9 @@ namespace ConsoleApp3
             }
         }
 
-        public async Task<IDictionary<string, ServicePrincipal>> AddServicePrincipal(ServicePrincipal item)
+        public async Task<ApplicationResults> AddServicePrincipal(ServicePrincipal item)
         {
+            Console.WriteLine($"Creates Application {item.DisplayName} ONLY");
             var client = await GetClient();
             var newApp = await AddApplicationRegistration(new Application()
             {
@@ -148,8 +150,11 @@ namespace ConsoleApp3
 
             });
             item.AppId = newApp.AppId;
+
+            Console.WriteLine($"Creates ServicePrincipal using app ID  {item.AppId}");
             var newSp =  await client.ServicePrincipals.Request().AddAsync(item);
-            return new Dictionary<string, ServicePrincipal>() { { newApp.Id, newSp } };
+            Console.WriteLine($"Returns both");
+            return new ApplicationResults() { CurrentApplication = newApp, CurrentServicePrincipal = newSp };
         }
 
 
