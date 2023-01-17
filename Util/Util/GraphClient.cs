@@ -147,14 +147,32 @@ namespace ConsoleApp3
             var newApp = await AddApplicationRegistration(new Application()
             {
                 DisplayName = item.DisplayName,
-
             });
+            Console.WriteLine($"Creates ServicePrincipal using app ID  {newApp.AppId}");
+            
             item.AppId = newApp.AppId;
-
-            Console.WriteLine($"Creates ServicePrincipal using app ID  {item.AppId}");
+            item.DisplayName = newApp.DisplayName;
             var newSp =  await client.ServicePrincipals.Request().AddAsync(item);
             Console.WriteLine($"Returns both");
             return new ApplicationResults() { CurrentApplication = newApp, CurrentServicePrincipal = newSp };
+        }
+
+        public async Task AddOwners(string[] ownerList, Application application)
+        {
+            var client = await GetClient();
+            foreach (var owner in ownerList)
+            {
+                var directoryObject = new DirectoryObject
+                {
+                    Id = owner
+                };
+                await client.Applications[application.Id].Owners.References
+                    .Request()
+                    .AddAsync(directoryObject);
+            }
+            
+
+
         }
 
 
