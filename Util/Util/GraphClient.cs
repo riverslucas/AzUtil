@@ -170,11 +170,28 @@ namespace ConsoleApp3
                     .Request()
                     .AddAsync(directoryObject);
             }
-            
-
-
         }
 
+        public async Task<string> CreateNewADGroup(string groupName, string tenantId)
+        {
+            try
+            {
+                var client = await GetClient();
+                var newGroup = await client.Groups.Request().AddAsync(new Group()
+                {
+                    Description = "Some Description",
+                    DisplayName = groupName,
+                    MailEnabled = false,
+                    MailNickname = $"Nickname_{groupName}",
+                    SecurityEnabled = true
+                });
+                return groupName;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
 
     }
 }
