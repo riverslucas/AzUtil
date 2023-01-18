@@ -2,6 +2,7 @@
 using Azure.Identity;
 using Microsoft.Graph;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.Net.Http.Headers;
 using System.Text;
 using Util;
@@ -192,6 +193,57 @@ namespace ConsoleApp3
                 throw;
             }
         }
+
+        public async Task<string> GetAllRoles(string token)
+        {
+            var url = "https://management.azure.com/providers/Microsoft.Authorization/roleDefinitions?api-version=2022-04-01";
+            var client = new HttpClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var results = await client.GetAsync(url);
+            return await results.Content.ReadAsStringAsync();
+        }
+
+
+        private async Task<string> AddRbacTo(ServicePrincipal sp, string tenantId, string subscriptionId, string myresourcegroup, string roleassignmentID, string token)
+        {
+            try
+            {
+                var client = await GetClient();
+                var scope = $"subscriptions/{subscriptionId}/resourceGroups/{myresourcegroup}";
+
+                var url = $"https://management.azure.com/{scope}/providers/Microsoft.Authorization/roleAssignments/{roleassignmentID}?api-version=2022-04-01";
+                var payload = new RoleDefinitionItem()
+                {
+                    properties = new RoleDefinitionItemProperties()
+                    {
+                        roleDefinitionId = $"/{scope}/providers/Microsoft.Authorization/roleDefinitions/{roleassignmentID}",
+                        principalId = sp.Id,
+                        principalType = "ServicePrincipal"
+                    }
+                };
+
+                using (var httpClient = new HttpClient())
+                {
+                    var json = JsonConvert.SerializeObject(payload);
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                    var content = new StringContent(json.ToString(), Encoding.UTF8, "application/json");
+                    var response = await httpClient.PutAsync(url, content);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        return await response.Content.ReadAsStringAsync();
+                    }
+                    throw new Exception($"{response.StatusCode} {response.RequestMessage.Content.ReadAsStringAsync().Result}");
+                }
+
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+       
 
     }
 }
