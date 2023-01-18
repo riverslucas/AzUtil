@@ -204,7 +204,7 @@ namespace ConsoleApp3
         }
 
 
-        private async Task<string> AddRbacTo(ServicePrincipal sp, string tenantId, string subscriptionId, string myresourcegroup, string roleassignmentID, string token)
+        public async Task<string> AddRbacTo(ServicePrincipal sp, string tenantId, string subscriptionId, string myresourcegroup, string roleassignmentID, string token)
         {
             try
             {
