@@ -3,6 +3,7 @@ using Azure.Identity;
 using Microsoft.Graph;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 using System.Net.Http.Headers;
 using System.Text;
 using Util;
@@ -150,10 +151,10 @@ namespace ConsoleApp3
                 DisplayName = item.DisplayName,
             });
             Console.WriteLine($"Creates ServicePrincipal using app ID  {newApp.AppId}");
-            
+
             item.AppId = newApp.AppId;
             item.DisplayName = newApp.DisplayName;
-            var newSp =  await client.ServicePrincipals.Request().AddAsync(item);
+            var newSp = await client.ServicePrincipals.Request().AddAsync(item);
             Console.WriteLine($"Returns both");
             return new ApplicationResults() { CurrentApplication = newApp, CurrentServicePrincipal = newSp };
         }
@@ -204,24 +205,25 @@ namespace ConsoleApp3
         }
 
 
-        public async Task<string> AddRbacTo(ServicePrincipal sp, string tenantId, string subscriptionId, string myresourcegroup, string roleassignmentID, string token)
+        public async Task<string> AddRbacToResourceGroup(ServicePrincipal sp, string tenantId, string subscriptionId, string myresourcegroup, string roleassignmentID)
         {
             try
             {
                 var client = await GetClient();
                 var scope = $"subscriptions/{subscriptionId}/resourceGroups/{myresourcegroup}";
-
-                var url = $"https://management.azure.com/{scope}/providers/Microsoft.Authorization/roleAssignments/{roleassignmentID}?api-version=2022-04-01";
-                var payload = new RoleDefinitionItem()
+                var roleAssignmentId = roleassignmentID; //reader
+                var guid = Guid.NewGuid().ToString();
+                var url = $"https://management.azure.com/{scope}/providers/Microsoft.Authorization/roleAssignments/{guid}?api-version=2022-04-01";
+                var payload = new AzureRoleDefinitionPayload()
                 {
-                    properties = new RoleDefinitionItemProperties()
+                    properties = new AzureRoleDefinitionPayloadProperties()
                     {
-                        roleDefinitionId = $"/{scope}/providers/Microsoft.Authorization/roleDefinitions/{roleassignmentID}",
+                        roleDefinitionId = $"/{scope}/providers/Microsoft.Authorization/roleDefinitions/{roleAssignmentId}",
                         principalId = sp.Id,
                         principalType = "ServicePrincipal"
                     }
                 };
-
+                var token = await GetManagementAzureToken();
                 using (var httpClient = new HttpClient())
                 {
                     var json = JsonConvert.SerializeObject(payload);
@@ -233,7 +235,7 @@ namespace ConsoleApp3
                     {
                         return await response.Content.ReadAsStringAsync();
                     }
-                    throw new Exception($"{response.StatusCode} {response.RequestMessage.Content.ReadAsStringAsync().Result}");
+                    throw new Exception($"{response.StatusCode} {response.Content.ReadAsStringAsync().Result}");
                 }
 
             }
@@ -243,7 +245,12 @@ namespace ConsoleApp3
             }
         }
 
-       
-
+        private async Task<string> GetManagementAzureToken()
+        {
+            var creds = new ClientSecretCredential(TenantId, ClientId, Secret);
+            var context = new TokenRequestContext(new string[] { "https://management.azure.com//.default" });
+            var token = await creds.GetTokenAsync(context);
+            return token.Token;
+        }
     }
 }
