@@ -245,6 +245,50 @@ namespace ConsoleApp3
             }
         }
 
+
+
+        public async Task<string> AddRbacToResource(ServicePrincipal sp, string tenantId, string subscriptionId, string myresourcegroup, string roleAssignmentID, string provider, string providerName)
+        {
+            //
+            try
+            {
+                var client = await GetClient();
+                var scope = $"subscriptions/{subscriptionId}/resourceGroups/{myresourcegroup}/providers/{provider}/{providerName}";
+                
+                var guid = Guid.NewGuid().ToString();
+                var url = $"https://management.azure.com/{scope}/providers/Microsoft.Authorization/roleAssignments/{guid}?api-version=2022-04-01";
+                var payload = new AzureRoleDefinitionPayload()
+                {
+                    properties = new AzureRoleDefinitionPayloadProperties()
+                    {
+                        roleDefinitionId = $"/{scope}/providers/Microsoft.Authorization/roleDefinitions/{roleAssignmentID}",
+                        principalId = sp.Id,
+                        principalType = "ServicePrincipal"
+                    }
+                };
+                var token = await GetManagementAzureToken();
+                using (var httpClient = new HttpClient())
+                {
+                    var json = JsonConvert.SerializeObject(payload);
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                    var content = new StringContent(json.ToString(), Encoding.UTF8, "application/json");
+                    var response = await httpClient.PutAsync(url, content);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        return await response.Content.ReadAsStringAsync();
+                    }
+                    throw new Exception($"{response.StatusCode} {response.Content.ReadAsStringAsync().Result}");
+                }
+
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+
         private async Task<string> GetManagementAzureToken()
         {
             var creds = new ClientSecretCredential(TenantId, ClientId, Secret);
