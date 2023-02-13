@@ -211,14 +211,14 @@ namespace ConsoleApp3
             {
                 var client = await GetClient();
                 var scope = $"subscriptions/{subscriptionId}/resourceGroups/{myresourcegroup}";
-                var roleAssignmentId = roleassignmentID; //reader
+                
                 var guid = Guid.NewGuid().ToString();
                 var url = $"https://management.azure.com/{scope}/providers/Microsoft.Authorization/roleAssignments/{guid}?api-version=2022-04-01";
                 var payload = new AzureRoleDefinitionPayload()
                 {
                     properties = new AzureRoleDefinitionPayloadProperties()
                     {
-                        roleDefinitionId = $"/{scope}/providers/Microsoft.Authorization/roleDefinitions/{roleAssignmentId}",
+                        roleDefinitionId = $"/{scope}/providers/Microsoft.Authorization/roleDefinitions/{roleassignmentID}",
                         principalId = sp.Id,
                         principalType = "ServicePrincipal"
                     }
