@@ -247,13 +247,13 @@ namespace ConsoleApp3
 
 
 
-        public async Task<string> AddRbacToResource(ServicePrincipal sp, string tenantId, string subscriptionId, string myresourcegroup, string roleAssignmentID, string provider, string providerName)
+        public async Task<string> AddRbacToResource(ServicePrincipal sp, string tenantId, string subscriptionId, string myresourcegroup, string roleAssignmentID, string provider, string providerName, string resourceName)
         {
             //
             try
             {
                 var client = await GetClient();
-                var scope = $"subscriptions/{subscriptionId}/resourceGroups/{myresourcegroup}/providers/{provider}/{providerName}";
+                var scope = $"subscriptions/{subscriptionId}/resourceGroups/{myresourcegroup}/providers/{provider}/{providerName}/{resourceName}";
                 
                 var guid = Guid.NewGuid().ToString();
                 var url = $"https://management.azure.com/{scope}/providers/Microsoft.Authorization/roleAssignments/{guid}?api-version=2022-04-01";
