@@ -159,6 +159,17 @@ namespace ConsoleApp3
             return new ApplicationResults() { CurrentApplication = newApp, CurrentServicePrincipal = newSp };
         }
 
+        public async Task<ApplicationResults> AddServicePrincipal(ServicePrincipal item, string appId)
+        {
+            Console.WriteLine($"Creates Application {item.DisplayName} ONLY");
+            var client = await GetClient();
+            item.AppId = appId;
+            item.DisplayName = item.DisplayName;
+            var newSp = await client.ServicePrincipals.Request().AddAsync(item);
+            Console.WriteLine($"Returns both");
+            return new ApplicationResults() { CurrentServicePrincipal = newSp };
+        }
+
         public async Task AddOwners(string[] ownerList, Application application)
         {
             var client = await GetClient();
